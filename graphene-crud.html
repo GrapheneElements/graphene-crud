@@ -11,10 +11,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../graphene-client/graphene-client.html">
 <link rel="import" href="../graphene-doc/graphene-doc.html">
+<link rel="import" href="../../conf/apiSettings.js">
 
 <dom-module id="graphene-crud">
   <template>
-    <graphene-client id="client"></graphene-client>
+      <graphene-client id="client"></graphene-client>
+      <graphene-doc id="create-doc"></graphene-doc>
+      <graphene-doc id="read-doc"></graphene-doc>
+      <graphene-doc id="update-doc"></graphene-doc>
+      <graphene-doc id="delete-doc"></graphene-doc>
   </template>
   <script>
   (function() {
