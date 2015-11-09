@@ -14,91 +14,99 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../conf/api-settings.html">
 
 <dom-module id="graphene-crud">
-  <template>
-      <graphene-client id="client"></graphene-client>
-      <graphene-doc id="create-doc"></graphene-doc>
-      <graphene-doc id="read-doc"></graphene-doc>
-      <graphene-doc id="update-doc"></graphene-doc>
-      <graphene-doc id="delete-doc"></graphene-doc>
-  </template>
-  <script>
-  (function() {
-    'use strict';
-    Polymer({
-      is: 'graphene-crud',
+    <template>
+        <graphene-client id="client"></graphene-client>
+        <graphene-doc id="create-doc"></graphene-doc>
+        <graphene-doc id="read-doc"></graphene-doc>
+        <graphene-doc id="update-doc"></graphene-doc>
+        <graphene-doc id="delete-doc"></graphene-doc>
+    </template>
+    <script>
+        (function () {
+            'use strict';
+            Polymer({
+                is: 'graphene-crud',
+                attached: function () {
+                    this._cDoc = this.$$('#create-doc');
+                    this._rDoc = this.$$('#read-doc');
+                    this._uDoc = this.$$('#update-doc');
+                    this._dDoc = this.$$('#delete-doc');
+                },
 
-      create:function(model){
-        if(!!this.modelDoc.c && this.isValid('c'))
-          return this.$.client.gFetch(this.modelDoc.c,this.model);
-      },
+                create: function () {
+                    if (!!this._cDoc && this.isValid('c'))
+                        return this.$.client.gFetch(this.modelDoc.c, this.model);
+                },
 
-      read:function(id){
-        if(!!this.modelDoc.r)
-          return this.$.client.gFetch(this.modelDoc.r.replace(':id',id));
-      },
+                read: function (id) {
 
-      update:function(){
-        if(!!this.modelDoc.r && this.isValid('u'))
-          return this.$.client.gFetch(this.modelDoc.u,this.model);
-      },
+                    if (!!this.modelDoc.r)
+                        return this.$.client.gFetch(this.modelDoc.r.replace(':id', id));
+                },
 
-      delete:function(){
-        if(!!this.modelDoc.d && this.isValid('d'))
-          return this.$.client.gFetch(this.modelDoc.d,this.model);
-      },
+                update: function () {
+                    if (!!this.modelDoc.r && this.isValid('u'))
+                        return this.$.client.gFetch(this.modelDoc.u, this.model);
+                },
 
-      getCStruct:function(){
-        return this.a;
-      },
+                delete: function () {
+                    if (!!this.modelDoc.d && this.isValid('d'))
+                        return this.$.client.gFetch(this.modelDoc.d, this.model);
+                },
 
-      getRStruct:function(){
+                getCStruct: function () {
+                    return this.a;
+                },
 
-      },
+                getRStruct: function () {
 
-      getUStruct:function(){
+                },
 
-      },
+                getUStruct: function () {
 
-      getDStruct:function(){
+                },
 
-      },
+                getDStruct: function () {
 
-      isValid:function(mode){
-        return true;
-      },
+                },
+
+                isValid: function (mode) {
+                    return true;
+                },
 
 
-      _fetchDoc : function(action,mode){
-        this.$.client.fetch('/system/doc/'+action.replace('.','__'))
-          .then(function(res){
-            this.modelDoc[mode] = res;
-          }.bind(this))
-          .catch(function(err){
-            console.error('Cannot fetch doc of: '+newModelName+' error during download ',err)
-          }.bind(this));
-      },
+                _fetchDoc: function (action, mode) {
+                    this.$.client.fetch('/system/doc/' + action.replace('.', '__'))
+                            .then(function (res) {
+                                this.modelDoc[mode] = res;
+                            }.bind(this))
+                            .catch(function (err) {
+                                console.error('Cannot fetch doc of: ' + newModelName + ' error during download ', err)
+                            }.bind(this));
+                },
 
-      _modelNameChanged:function(newModelName, oldModelName){
-        this.modelDoc = {};
-        if(!!apiSettings.models['newModelName']){
-          var modelMapping = apiSettings.models['newModelName'];
-          this._fetchDoc(modelMapping.replace('$CRUD','CREATE'),'c');
-          this._fetchDoc(modelMapping.replace('$CRUD','READ'  ),'r');
-          this._fetchDoc(modelMapping.replace('$CRUD','UPDATE'),'u');
-          this._fetchDoc(modelMapping.replace('$CRUD','DELETE'),'d');
-        }else{
-          console.error('Cannot fetch doc of: '+newModelName+' model unrecognized');
-        }
-      },
+                _modelNameChanged: function (newModelName) {
+                    this.modelName = newModelName;
+                    if (!!apiSettings.actions[this.modelName] && apiSettings.actions[this.modelName].crud) {
+                        this._cDoc.setActionName(apiSettings.actions[this.modelName].c);
+                        this._rDoc.setActionName(apiSettings.actions[this.modelName].r);
+                        this._uDoc.setActionName(apiSettings.actions[this.modelName].u);
+                        this._dDoc.setActionName(apiSettings.actions[this.modelName].d);
+                    } else {
+                        console.error('crud of ' + this.modelName + ' is not handled check the api-settings.html file');
+                    }
+                },
 
-      properties: {
-        modelName : {type:String, observer:'_modelNameChanged'}, //namespace-modelname
-        modelDoc  : Object, //informazioni ottenute da doc
-
-        //Modello corrente
-        model     : Object
-      }
-    });
-  })();
-  </script>
+                properties: {
+                    modelName: {type: String, observer: '_modelNameChanged'}, //namespace-modelname
+                    _cDoc: Object,
+                    _rDoc: Object,
+                    _uDoc: Object,
+                    _dDoc: Object,
+                    //Modello corrente
+                    model: Object
+                }
+            });
+        })();
+    </script>
 </dom-module>
