@@ -141,7 +141,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
 
         delete: function (model) {
-          return this.$.client.fetch(this._dDoc.url, model, this._uDoc.method);
+          return this.$.client.fetch(this._dDoc.url, model, this._dDoc.method);
         },
         getCStruct: function () {
           return this._cDoc.interface['flat-struct'];
