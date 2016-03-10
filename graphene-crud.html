@@ -7,201 +7,102 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-<!--
 
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../graphene-client/graphene-client.html">
-<link rel="import" href="../graphene-doc/graphene-doc.html">
-<link rel="import" href="../../conf/api-settings.html">
--->
 <dom-module id="graphene-crud">
-  <template>
-    <graphene-client id="client"></graphene-client>
-    <graphene-doc id="create-doc"></graphene-doc>
-    <graphene-doc id="read-doc"></graphene-doc>
-    <graphene-doc id="update-doc"></graphene-doc>
-    <graphene-doc id="delete-doc"></graphene-doc>
-  </template>
-  <script>
-    JSON.flatten = function (data) {
-      var result = {};
+    <template>
+        <graphene-client id="client"></graphene-client>
+        <graphene-doc id="c" request-proto="{{createProto}}" action-name="{{cAction}}"
+                      doc="{{_c0Doc}}"></graphene-doc>
+        <graphene-doc id="r" response-proto="{{readProto}}" action-name="{{rAction}}"
+                      doc="{{_r0Doc}}"></graphene-doc>
+        <graphene-doc id="u" request-proto="{{updateProto}}" action-name="{{uAction}}"
+                      doc="{{_u0Doc}}"></graphene-doc>
+        <graphene-doc id="d" request-proto="{{deleteProto}}" action-name="{{dAction}}"
+                      doc="{{_d0Doc}}"></graphene-doc>
+    </template>
+    <script>
+        (function() {
+            'use strict';
+            Polymer({
+                is: 'graphene-crud',
 
-      function recurse(cur, prop) {
-        if (Object(cur) !== cur) {
-          result[prop] = cur;
-        } else if (Array.isArray(cur)) {
-          for (var i = 0, l = cur.length; i < l; i++) {
-            recurse(cur[i], prop + '[' + i + ']');
-          }
-          if (l === 0) {
-            result[prop] = [];
-          }
-        } else {
-          var isEmpty = true;
-          for (var p in cur) {
-            isEmpty = false;
-            recurse(cur[p], prop ? prop + '.' + p : p);
-          }
-          if (isEmpty && prop) {
-            result[prop] = {};
-          }
-        }
-      }
+                create: function(model) {
+                    return this.$.client.fetch(this._cDoc.url, model);
+                },
 
-      recurse(data, '');
-      return result;
-    };
+                read: function(id) {
+                    return this.$.client.fetch(this._rDoc.url.replace(':id', id));
+                },
 
-    JSON.unflatten = function (data) {
-      'use strict';
-      if (Object(data) !== data || Array.isArray(data)) {
-        return data;
-      }
-      var regex = /\.?([^.\[\]]+)|\[(\d+)\]/g, resultholder = {};
-      for (var p in data) {
-        var cur = resultholder,
-                prop = '',
-                m = regex.exec(p);
-        while (m) {
-          cur = cur[prop] || (cur[prop] = (m[2] ? [] : {}));
-          prop = m[2] || m[1];
-          m = regex.exec(p);
-        }
-        cur[prop] = data[p];
-      }
-      return resultholder[''] || resultholder;
-    };
+                update: function(model) {
+                    return this.$.client.fetch(this._uDoc.url, model, this._uDoc.method);
+                },
 
-  </script>
-  <script>
-    (function () {
-      'use strict';
-      Polymer({
-        is: 'graphene-crud',
-        attached: function () {
-          this._cODoc = this.$$('#create-doc');
-          this._rODoc = this.$$('#read-doc');
-          this._uODoc = this.$$('#update-doc');
-          this._dODoc = this.$$('#delete-doc');
+                delete: function(model) {
+                    return this.$.client.fetch(this._dDoc.url, model, this._dDoc.method);
+                },
 
-          //Creating listeners
-          this._cODoc.addEventListener('doc-update', function (e) {
-            this._onCreateDoc(e);
-          }.bind(this));
-          this._rODoc.addEventListener('doc-update', function (e) {
-            this._onReadDoc(e);
-          }.bind(this));
-          this._uODoc.addEventListener('doc-update', function (e) {
-            this._onUpdateDoc(e);
-          }.bind(this));
-          this._dODoc.addEventListener('doc-update', function (e) {
-            this._onDeleteDoc(e);
-          }.bind(this));
-        },
+                _getAction: function(settings, mode) {
+                    return this.settings[mode];
+                },
 
-        _onCreateDoc: function (e) {
-          console.log(e.detail[0]);
-          this._cDoc = e.detail[0];
-          this.checkReady();
-        },
-        _onReadDoc: function (e) {
-          console.log(e.detail[0]);
-          this._rDoc = e.detail[0];
-          this.checkReady();
-        },
-        _onUpdateDoc: function (e) {
-          console.log(e.detail[0]);
-          this._uDoc = e.detail[0];
-          this.checkReady();
-        },
-        _onDeleteDoc: function (e) {
-          console.log(e.detail[0]);
-          this._dDoc = e.detail[0];
-          this.checkReady();
-        },
+                _loadSettings: function(modelName) {
+                    var modelSettings = window.graphene.settings.models[modelName];
+                    if (!!modelSettings) {
+                        return {
+                            c: modelSettings + '_CREATE',
+                            r: modelSettings + '_READ',
+                            u: modelSettings + '_UPDATE',
+                            d: modelSettings + '_DELETE'
+                        };
+                    } else {
+                        return null;
+                    }
+                },
 
-        checkReady: function () {
-          if (!!this._cDoc && !!this._rDoc && !!this._uDoc && !!this._dDoc) {
-            this.fire('crud-ready');
-            return true;
-          }
-          return false;
-        },
+                _clearDoc: function(docInstance) {
+                    var doc = docInstance.base.DocAction[0];
+                    return doc;
+                },
 
-        create: function (model) {
-          return this.$.client.fetch(this._cDoc.url, model);
-        },
+                _checkReady: function(_cDoc, _rDoc, _uDoc, _dDoc) {
+                    if (!!_cDoc.base.url && !!_rDoc.base.url && !!_uDoc.base.url && !!_dDoc.base.url) {
+                        this.fire('crud-ready');
+                        return true;
+                    }
+                    return false;
+                },
 
-        read: function (id) {
-          return this.$.client.fetch(this._rDoc.url.replace(':id', id));
-        },
 
-        update: function (model) {
-          return this.$.client.fetch(this._uDoc.url, model, this._uDoc.method);
-        },
+                observers: [],
 
-        delete: function (model) {
-          return this.$.client.fetch(this._dDoc.url, model, this._dDoc.method);
-        },
-        getCStruct: function () {
-          return this._cDoc.interface['flat-struct'];
-        },
-        getRStruct: function () {
-          return this._rDoc.interface['flat-struct'];
-        },
-        getUStruct: function () {
-          return this._uDoc.interface['flat-struct'];
-        },
-        getDStruct: function () {
-          return this._dDoc.interface['flat-struct'];
-        },
+                properties: {
+                    modelName: String, //namespace-modelname
 
-        flatToTree: function (flatModel) {
+                    createProto: {type: Object, notify: true},
+                    readProto:   {type: Object, notify: true},
+                    updateProto: {type: Object, notify: true},
+                    deleteProto: {type: Object, notify: true},
 
-        },
-        isValid: function (model, mode) {
-          return true;
-        },
+                    settings: {type: Object, computed: '_loadSettings(modelName)'},
+                    cAction:  {type: String, computed: '_getAction(settings.*, \'c\' )'},
+                    rAction:  {type: String, computed: '_getAction(settings.*, \'r\' )'},
+                    uAction:  {type: String, computed: '_getAction(settings.*, \'u\' )'},
+                    dAction:  {type: String, computed: '_getAction(settings.*, \'d\' )'},
 
-        _modelNameChanged: function (newModelName) {
-          this.modelName = newModelName;
-          if (!!apiSettings.actions[this.modelName]) {
-            this._cODoc.setActionName(apiSettings.actions[this.modelName].c);
-            this._rODoc.setActionName(apiSettings.actions[this.modelName].r);
-            this._uODoc.setActionName(apiSettings.actions[this.modelName].u);
-            this._dODoc.setActionName(apiSettings.actions[this.modelName].d);
-          } else {
-            console.error('crud for ' + this.modelName + ' is not handled check the api-settings.html file');
-          }
-        },
+                    isReady: {type: Boolean, computed: '_checkReady(_cDoc.*, _rDoc.*, _uDoc.*, _dDoc.*)'},
 
-        getModelPrototype: function () {
-          var dots = {};
-          var flat = this._cDoc.interface['flat-struct'];
-          for (var i in flat) {
-            dots[i.replace(new RegExp('_', 'g'), '.')] = '';
-          }
-          console.log(dots);
-          console.log(JSON.unflatten(dots));
-          return JSON.parse(JSON.stringify(JSON.unflatten(dots)));
-        },
+                    _cDoc: {type: Object, computed: '_clearDoc(_c0Doc.*)'},
+                    _rDoc: {type: Object, computed: '_clearDoc(_r0Doc.*)'},
+                    _uDoc: {type: Object, computed: '_clearDoc(_u0Doc.*)'},
+                    _dDoc: {type: Object, computed: '_clearDoc(_d0Doc.*)'},
 
-        properties: {
-          modelName: {type: String, observer: '_modelNameChanged'}, //namespace-modelname
-          _cODoc: Object,
-          _rODoc: Object,
-          _uODoc: Object,
-          _dODoc: Object,
-
-          _cDoc: Object,
-          _rDoc: Object,
-          _uDoc: Object,
-          _dDoc: Object,
-
-          //Modello corrente
-          model: Object
-        }
-      });
-    })();
-  </script>
+                    _c0Doc: Object,
+                    _r0Doc: Object,
+                    _u0Doc: Object,
+                    _d0Doc: Object
+                }
+            });
+        })();
+    </script>
 </dom-module>
